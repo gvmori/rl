@@ -2,6 +2,8 @@ extern crate tcod;
 use tcod::console::*;
 use tcod::colors::*;
 
+use map::Map;
+
 pub struct Object {
     x: i32,
     y: i32,
@@ -19,7 +21,16 @@ impl Object {
         }
     }
 
-    pub fn move_by (&mut self, dx: i32, dy: i32) {
+    pub fn move_by (&mut self, map: &Map, dx: i32, dy: i32) {
+        let tx = self.x + dx;
+        let ty = self.y + dy;
+
+        if tx < 0 || tx >= map.len() as i32 
+            || ty < 0 || ty >= map[0].len() as i32
+            || map[tx as usize][ty as usize].blocked {
+            return
+        }
+
         self.x += dx;
         self.y += dy;
     }

@@ -4,6 +4,7 @@ use tcod::colors;
 
 mod gameobj;
 mod config;
+mod map;
 
 fn main() {
     let mut root = Root::initializer()
@@ -20,7 +21,10 @@ fn main() {
 
     let mut console = Offscreen::new(config::SCREEN_WIDTH, config::SCREEN_HEIGHT);
 
+    let mut map = map::gen_map(config::MAP_WIDTH as usize, config::MAP_HEIGHT as usize);
+
     while !root.window_closed() {
+        draw_map(&mut console, &map);
         for obj in &objects {
             obj.draw(&mut console);
         }
@@ -30,13 +34,26 @@ fn main() {
             obj.clear(&mut console);
         }
 
-        if handle_keys(&mut root, &mut objects[0]) {
+        if handle_keys(&mut root, &map, &mut objects[0]) {
             break
         }
     }
 }
 
-fn handle_keys(root: &mut Root, player: &mut gameobj::Object) -> bool {
+fn draw_map(console: &mut Console, map: &map::Map) {
+    for x in 0..map.len() {
+        for y in 0..map[0].len() {
+            if map[x][y].block_sight {
+                console.set_char_background(x as i32, y as i32, config::COLOR_DARK_WALL, BackgroundFlag::Set);
+            }
+            else {
+                console.set_char_background(x as i32, y as i32, config::COLOR_DARK_GROUND, BackgroundFlag::Set);
+            }
+        }
+    }
+}
+
+fn handle_keys(root: &mut Root, map: &map::Map, player: &mut gameobj::Object) -> bool {
     use tcod::input::Key;
     use tcod::input::KeyCode::*;
 
@@ -47,10 +64,10 @@ fn handle_keys(root: &mut Root, player: &mut gameobj::Object) -> bool {
             root.set_fullscreen(!is_fullscreen);
         },
         Key { code: Escape, .. } => return true,
-        Key { code: Up, .. } => player.move_by(0, -1),
-        Key { code: Down, .. } => player.move_by(0, 1),
-        Key { code: Left, .. } => player.move_by(-1, 0),
-        Key { code: Right, .. } => player.move_by(1, 0),
+        Key { code: Up, .. } => player.move_by(map, 0, -1),
+        Key { code: Down, .. } => player.move_by(map, 0, 1),
+        Key { code: Left, .. } => player.move_by(map, -1, 0),
+        Key { code: Right, .. } => player.move_by(map, 1, 0),
         _ => {},
     }
 
